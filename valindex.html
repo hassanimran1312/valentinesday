@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Required</title>
+    <style>
+        :root {
+            --pink-soft: #fce4ec;
+            --pink-accent: #f06292;
+            --pink-deep: #e91e63;
+            --white-lace: #fff9fb;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background-color: var(--pink-soft);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #5d4037;
+            overflow: hidden;
+        }
+
+        /* Floating hearts background */
+        .hearts-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .floating-heart {
+            position: absolute;
+            opacity: 0.15;
+            animation: floatUp linear infinite;
+            font-size: 24px;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(100vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.15;
+            }
+            90% {
+                opacity: 0.15;
+            }
+            100% {
+                transform: translateY(-100px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* CAPTCHA CONTAINER */
+        #captcha-container {
+            background: white;
+            padding: 0 0 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+            width: 380px;
+            max-width: 95vw;
+            text-align: left;
+            border: 2px solid #e0e0e0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .captcha-header {
+            background: #4285f4;
+            color: white;
+            padding: 16px 20px;
+            border-radius: 10px 10px 0 0;
+        }
+
+        .captcha-header p {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            font-weight: 400;
+            opacity: 0.9;
+        }
+
+        .captcha-header strong {
+            font-family: Arial, sans-serif;
+            font-size: 22px;
+            font-weight: 500;
+            display: block;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        .captcha-subtext {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            opacity: 0.8;
+            margin-top: 6px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            padding: 3px;
+            background: #dedede;
+        }
+
+        .square {
+            width: 100%;
+            aspect-ratio: 1;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+        }
+
+        .square img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            pointer-events: none;
+        }
+
+        .square::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(66, 133, 244, 0);
+            transition: background 0.2s;
+        }
+
+        .square.selected {
+            border-color: #4285f4;
+            transform: scale(0.92);
+        }
+
+        .square.selected::after {
+            background: rgba(66, 133, 244, 0.15);
+        }
+
+        .square.selected::before {
+            content: '\2713';
+            position: absolute;
+            bottom: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            background: #4285f4;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            z-index: 2;
+        }
+
+        .captcha-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px 0;
+        }
+
+        .captcha-footer .recaptcha-branding {
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            color: #999;
+        }
+
+        .verify-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: background 0.2s;
+        }
+
+        .verify-btn:hover {
+            background: #3367d6;
+        }
+
+        .error-msg {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #d32f2f;
+            padding: 8px 16px 0;
+            display: none;
+        }
+
+        /* VALENTINE PAGE */
+        #valentine-page {
+            display: none;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+            animation: fadeIn 1.5s ease-out;
+            padding: 20px;
+        }
+
+        #valentine-page h1 {
+            font-size: 3rem;
+            color: var(--pink-deep);
+            font-style: italic;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(233, 30, 99, 0.2);
+        }
+
+        #valentine-page .subtitle {
+            font-size: 1.1rem;
+            color: #ad1457;
+            margin-bottom: 10px;
+            line-height: 1.6;
+            max-width: 520px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .countdown-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .countdown-box {
+            background: white;
+            border-radius: 16px;
+            padding: 20px 16px;
+            min-width: 90px;
+            box-shadow: 0 8px 24px rgba(233, 30, 99, 0.15);
+            border: 2px solid var(--pink-accent);
+        }
+
+        .countdown-box .number {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: var(--pink-deep);
+            line-height: 1;
+        }
+
+        .countdown-box .label {
+            font-size: 0.75rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
+            font-family: Arial, sans-serif;
+        }
+
+        .valentine-message {
+            font-size: 1.1rem;
+            color: #5d4037;
+            margin-top: 30px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .heart-divider {
+            font-size: 2rem;
+            margin: 20px 0;
+            color: var(--pink-accent);
+        }
+
+        .arrived-message {
+            display: none;
+            font-size: 2rem;
+            color: var(--pink-deep);
+            font-weight: bold;
+            margin: 30px 0;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Confetti */
+        .confetti-piece {
+            position: fixed;
+            z-index: 100;
+            pointer-events: none;
+            animation: confettiFall linear forwards;
+        }
+
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(110vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .wish-line {
+            font-size: 1.3rem;
+            color: var(--pink-deep);
+            font-style: italic;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 400px) {
+            #captcha-container {
+                width: 100%;
+                border-radius: 0;
+                border: none;
+            }
+            .captcha-header {
+                border-radius: 0;
+            }
+            #valentine-page h1 {
+                font-size: 2.2rem;
+            }
+            .countdown-box {
+                min-width: 70px;
+                padding: 14px 10px;
+            }
+            .countdown-box .number {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Floating hearts background -->
+    <div class="hearts-bg" id="hearts-bg"></div>
+
+    <!-- CAPTCHA SCREEN -->
+    <div id="captcha-container">
+        <div class="captcha-header">
+            <p>Select all images of</p>
+            <strong>someone you'd recognize anywhere</strong>
+            <p class="captcha-subtext">If there are none, click skip</p>
+        </div>
+
+        <div class="grid" id="captcha-grid">
+            <!-- Grid will be populated by JavaScript -->
+        </div>
+
+        <p class="error-msg" id="error-msg">Please try again. Select all the correct images.</p>
+
+        <div class="captcha-footer">
+            <div class="recaptcha-branding">luvCAPTCHA</div>
+            <button class="verify-btn" onclick="verify()">Verify</button>
+        </div>
+    </div>
+
+    <!-- VALENTINE'S DAY PAGE -->
+    <div id="valentine-page">
+        <div class="heart-divider" aria-hidden="true">&hearts; &hearts; &hearts;</div>
+        <h1>Will you be my valentine?</h1>
+        <p class="subtitle">Even though you are 378 kilometers away right now, all I want to know is aap Tilburg kab aa rahi hien</p>
+
+        <div class="countdown-container" id="countdown">
+            <div class="countdown-box">
+                <div class="number" id="days">--</div>
+                <div class="label">Days</div>
+            </div>
+            <div class="countdown-box">
+                <div class="number" id="hours">--</div>
+                <div class="label">Hours</div>
+            </div>
+            <div class="countdown-box">
+                <div class="number" id="minutes">--</div>
+                <div class="label">Minutes</div>
+            </div>
+            <div class="countdown-box">
+                <div class="number" id="seconds">--</div>
+                <div class="label">Seconds</div>
+            </div>
+        </div>
+
+        <p class="arrived-message" id="arrived-message">&hearts; Valentine's Day has passed &hearts;</p>
+
+        <p class="wish-line">wish you were here</p>
+
+        <div class="heart-divider" aria-hidden="true">&hearts;</div>
+    </div>
+
+    <script>
+        // Floating hearts background
+        (function createHearts() {
+            var container = document.getElementById('hearts-bg');
+            var hearts = ['\u2665', '\u2764', '\u2661'];
+            for (var i = 0; i < 20; i++) {
+                var heart = document.createElement('span');
+                heart.className = 'floating-heart';
+                heart.textContent = hearts[i % hearts.length];
+                heart.style.left = Math.random() * 100 + '%';
+                heart.style.fontSize = (14 + Math.random() * 24) + 'px';
+                heart.style.animationDuration = (8 + Math.random() * 12) + 's';
+                heart.style.animationDelay = (Math.random() * 15) + 's';
+                container.appendChild(heart);
+            }
+        })();
+
+        // Target images (correct answers)
+        var targetImages = [
+            'images/target1.jpg',
+            'images/target2.jpg',
+            'images/target3.png',
+            'images/target4.png',
+            'images/target5.png',
+            'images/target6.png'
+        ];
+
+        // Celebrity decoy images - illustrated portrait SVGs of different looking people
+        function createDecoy1() {
+            // Blonde man with blue background (like a Chris Hemsworth type)
+            return 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' +
+                '<rect width="200" height="200" fill="#87CEEB"/>' +
+                '<rect x="60" y="120" width="80" height="80" rx="5" fill="#1a1a2e"/>' +
+                '<circle cx="100" cy="85" r="40" fill="#f5d0a9"/>' +
+                '<ellipse cx="100" cy="55" rx="42" ry="25" fill="#f0c040"/>' +
+                '<path d="M58 65 Q60 40 80 35 Q100 28 120 35 Q140 40 142 65" fill="#f0c040"/>' +
+                '<circle cx="85" cy="82" r="4" fill="#2980b9"/>' +
+                '<circle cx="115" cy="82" r="4" fill="#2980b9"/>' +
+                '<path d="M90 100 Q100 108 110 100" stroke="#c0392b" stroke-width="2" fill="none"/>' +
+                '<rect x="80" y="70" width="15" height="3" rx="1" fill="#d4a54a"/>' +
+                '<rect x="105" y="70" width="15" height="3" rx="1" fill="#d4a54a"/>' +
+                '</svg>'
+            );
+        }
+
+        function createDecoy2() {
+            // Dark-skinned man with green background
+            return 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' +
+                '<rect width="200" height="200" fill="#2d6a4f"/>' +
+                '<rect x="60" y="120" width="80" height="80" rx="5" fill="#f0f0f0"/>' +
+                '<circle cx="100" cy="85" r="40" fill="#8d5524"/>' +
+                '<path d="M60 70 Q65 40 100 35 Q135 40 140 70 Q140 55 130 50 Q100 30 70 50 Q60 55 60 70Z" fill="#1a1a1a"/>' +
+                '<circle cx="85" cy="82" r="4" fill="#2c1810"/>' +
+                '<circle cx="115" cy="82" r="4" fill="#2c1810"/>' +
+                '<path d="M88 100 Q100 110 112 100" stroke="#6b3a2a" stroke-width="2.5" fill="none"/>' +
+                '<path d="M80 95 L85 93" stroke="#8d5524" stroke-width="1.5"/>' +
+                '<path d="M120 95 L115 93" stroke="#8d5524" stroke-width="1.5"/>' +
+                '</svg>'
+            );
+        }
+
+        function createDecoy3() {
+            // Red-haired man with purple background
+            return 'data:image/svg+xml,' + encodeURIComponent(
+                '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">' +
+                '<rect width="200" height="200" fill="#6c3483"/>' +
+                '<rect x="55" y="120" width="90" height="80" rx="5" fill="#34495e"/>' +
+                '<circle cx="100" cy="85" r="40" fill="#fce0bd"/>' +
+                '<path d="M58 75 Q60 35 100 30 Q140 35 142 75 L142 60 Q135 30 100 22 Q65 30 58 60Z" fill="#c0392b"/>' +
+                '<circle cx="85" cy="80" r="4" fill="#27ae60"/>' +
+                '<circle cx="115" cy="80" r="4" fill="#27ae60"/>' +
+                '<path d="M90 100 Q100 106 110 100" stroke="#e74c3c" stroke-width="2" fill="none"/>' +
+                '<circle cx="80" cy="88" r="6" fill="rgba(255,180,150,0.4)"/>' +
+                '<circle cx="120" cy="88" r="6" fill="rgba(255,180,150,0.4)"/>' +
+                '<rect x="80" y="68" width="12" height="2.5" rx="1" fill="#c0392b"/>' +
+                '<rect x="108" y="68" width="12" height="2.5" rx="1" fill="#c0392b"/>' +
+                '</svg>'
+            );
+        }
+
+        // Build and shuffle grid
+        function buildGrid() {
+            var grid = document.getElementById('captcha-grid');
+            var cells = [];
+
+            // Add target images
+            targetImages.forEach(function(src) {
+                cells.push({ src: src, correct: true });
+            });
+
+            // Add celebrity decoys
+            cells.push({ src: createDecoy1(), correct: false });
+            cells.push({ src: createDecoy2(), correct: false });
+            cells.push({ src: createDecoy3(), correct: false });
+
+            // Shuffle array (Fisher-Yates)
+            for (var i = cells.length - 1; i > 0; i--) {
+                var j = Math.floor(Math.random() * (i + 1));
+                var temp = cells[i];
+                cells[i] = cells[j];
+                cells[j] = temp;
+            }
+
+            // Create DOM elements
+            cells.forEach(function(cell) {
+                var div = document.createElement('div');
+                div.className = 'square';
+                if (cell.correct) {
+                    div.setAttribute('data-correct', 'true');
+                }
+                div.onclick = function() { toggle(div); };
+
+                var img = document.createElement('img');
+                img.src = cell.src;
+                img.alt = 'captcha image';
+                img.draggable = false;
+                div.appendChild(img);
+
+                grid.appendChild(div);
+            });
+        }
+
+        buildGrid();
+
+        // CAPTCHA toggle
+        function toggle(el) {
+            el.classList.toggle('selected');
+            document.getElementById('error-msg').style.display = 'none';
+        }
+
+        // CAPTCHA verify
+        function verify() {
+            var selected = document.querySelectorAll('.square.selected');
+            var correctSelected = document.querySelectorAll('.square[data-correct="true"].selected');
+            var totalCorrect = document.querySelectorAll('.square[data-correct="true"]');
+
+            if (selected.length === totalCorrect.length && correctSelected.length === totalCorrect.length) {
+                document.getElementById('captcha-container').style.display = 'none';
+                document.getElementById('valentine-page').style.display = 'block';
+                document.body.style.backgroundColor = '#fff0f5';
+                document.body.style.overflow = 'auto';
+                startCountdown();
+                launchConfetti();
+            } else {
+                document.getElementById('error-msg').style.display = 'block';
+                selected.forEach(function(el) {
+                    el.classList.remove('selected');
+                });
+            }
+        }
+
+        // Countdown to Feb 14, 2026
+        var countdownInterval;
+        function startCountdown() {
+            var target = new Date('2026-02-14T00:00:00').getTime();
+
+            function update() {
+                var now = new Date().getTime();
+                var diff = target - now;
+
+                if (diff <= 0) {
+                    document.getElementById('days').textContent = '00';
+                    document.getElementById('hours').textContent = '00';
+                    document.getElementById('minutes').textContent = '00';
+                    document.getElementById('seconds').textContent = '00';
+                    clearInterval(countdownInterval);
+                    return;
+                }
+
+                var days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+                document.getElementById('days').textContent = days;
+                document.getElementById('hours').textContent = hours < 10 ? '0' + hours : hours;
+                document.getElementById('minutes').textContent = minutes < 10 ? '0' + minutes : minutes;
+                document.getElementById('seconds').textContent = seconds < 10 ? '0' + seconds : seconds;
+            }
+
+            update();
+            countdownInterval = setInterval(update, 1000);
+        }
+
+        // Confetti effect
+        function launchConfetti() {
+            var colors = ['#e91e63', '#f06292', '#ff80ab', '#f8bbd0', '#ff4081', '#c2185b', '#fce4ec'];
+
+            for (var i = 0; i < 60; i++) {
+                (function(index) {
+                    setTimeout(function() {
+                        var el = document.createElement('div');
+                        el.className = 'confetti-piece';
+                        var size = 8 + Math.random() * 12;
+                        el.style.width = size + 'px';
+                        el.style.height = size + 'px';
+                        el.style.left = Math.random() * 100 + 'vw';
+                        el.style.top = '-20px';
+                        el.style.background = colors[Math.floor(Math.random() * colors.length)];
+                        el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                        el.style.animationDuration = (2 + Math.random() * 3) + 's';
+                        el.style.animationDelay = '0s';
+                        document.body.appendChild(el);
+
+                        setTimeout(function() {
+                            if (el.parentNode) el.parentNode.removeChild(el);
+                        }, 5000);
+                    }, index * 50);
+                })(i);
+            }
+        }
+    </script>
+</body>
+</html>
